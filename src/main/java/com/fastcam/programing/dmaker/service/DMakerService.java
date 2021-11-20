@@ -1,13 +1,16 @@
 package com.fastcam.programing.dmaker.service;
 
+import com.fastcam.programing.dmaker.code.StatusCode;
 import com.fastcam.programing.dmaker.dto.CreateDeveloper;
 import com.fastcam.programing.dmaker.dto.DeveloperDetailDto;
 import com.fastcam.programing.dmaker.dto.DeveloperDto;
 import com.fastcam.programing.dmaker.dto.EditDeveloper;
 import com.fastcam.programing.dmaker.entity.Developer;
+import com.fastcam.programing.dmaker.entity.RetiredDeveloper;
 import com.fastcam.programing.dmaker.exception.DMakerErrorCode;
 import com.fastcam.programing.dmaker.exception.DMakerException;
 import com.fastcam.programing.dmaker.repository.DeveloperRepository;
+import com.fastcam.programing.dmaker.repository.RetiredDeveloperRepository;
 import com.fastcam.programing.dmaker.type.DeveloperLevel;
 import com.fastcam.programing.dmaker.type.DeveloperSkillType;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +28,7 @@ import static com.fastcam.programing.dmaker.exception.DMakerErrorCode.NO_DEVELOP
 @RequiredArgsConstructor
 public class DMakerService {
     private final DeveloperRepository developerRepository;
-    private final EntityManager em;
+    private final RetiredDeveloperRepository retiredDeveloperRepository;
 
     @Transactional
     public CreateDeveloper.Response createDeveloper(CreateDeveloper.Request request){
@@ -37,6 +40,7 @@ public class DMakerService {
                 .developerSkillType(request.getDeveloperSkillType())
                 .experienceYears(request.getExperienceYears())
                 .memberId(request.getMemberId())
+                .statusCode(StatusCode.EMPLOYED)
                 .name(request.getName())
                 .age(request.getAge())
                 .build();
@@ -57,8 +61,8 @@ public class DMakerService {
                 }));
     }
 
-    public List<DeveloperDto> getAllDevelopers() {
-        return developerRepository.findAll()
+    public List<DeveloperDto> getALLEmployedDeveloper() {
+        return developerRepository.findDevelopersByStatusCodeEquals(StatusCode.EMPLOYED)
                 .stream().map(DeveloperDto::fromEntity)
                 .collect(Collectors.toList());
     }
@@ -106,5 +110,22 @@ public class DMakerService {
         if (developerLevel == DeveloperLevel.JUNIOR && experienceYears > 4) {
             throw new DMakerException(LEVEL_EXPERIENCE_YEARS_NOT_MATCHED);
         }
+    }
+
+    @Transactional
+    public DeveloperDetailDto deleteDeveloper(String memberId) {
+        // 1. EMPLOYED -> RETIRED
+        Developer developer = developerRepository.findByMemberId(memberId)
+                .orElseThrow(() -> new DMakerException(NO_DEVELOPER));
+        developer.setStatusCode(StatusCode.RETIRED);
+
+        // 2. save into RetiredDeveloper
+        RetiredDeveloper retiredDeveloper = RetiredDeveloper.builder()
+                .memberId(memberId)
+                .name(developer.getName())
+                .build();
+
+        retiredDeveloperRepository.save(retiredDeveloper);
+        return DeveloperDetailDto.fromEntity(developer);
     }
 }
