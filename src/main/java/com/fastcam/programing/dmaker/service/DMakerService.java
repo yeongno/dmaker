@@ -1,6 +1,8 @@
 package com.fastcam.programing.dmaker.service;
 
 import com.fastcam.programing.dmaker.dto.CreateDeveloper;
+import com.fastcam.programing.dmaker.dto.DeveloperDetailDto;
+import com.fastcam.programing.dmaker.dto.DeveloperDto;
 import com.fastcam.programing.dmaker.entity.Developer;
 import com.fastcam.programing.dmaker.exception.DMakerErrorCode;
 import com.fastcam.programing.dmaker.exception.DMakerException;
@@ -12,7 +14,11 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static com.fastcam.programing.dmaker.exception.DMakerErrorCode.LEVEL_EXPERIENCE_YEARS_NOT_MATCHED;
+import static com.fastcam.programing.dmaker.exception.DMakerErrorCode.NO_DEVELOPER;
 
 @Service
 @RequiredArgsConstructor
@@ -58,5 +64,17 @@ public class DMakerService {
                 .ifPresent((developer -> {
                     throw new DMakerException(DMakerErrorCode.DUPLICATED_MEMBER_ID);
                 }));
+    }
+
+    public List<DeveloperDto> getAllDevelopers() {
+        return developerRepository.findAll()
+                .stream().map(DeveloperDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public DeveloperDetailDto getDeveloperDetail(String memberId) {
+        return developerRepository.findByMemberId(memberId)
+                .map(DeveloperDetailDto::fromEntity)
+                .orElseThrow(() -> new DMakerException(NO_DEVELOPER));
     }
 }

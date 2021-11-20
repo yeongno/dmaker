@@ -1,13 +1,12 @@
 package com.fastcam.programing.dmaker.controller;
 
 import com.fastcam.programing.dmaker.dto.CreateDeveloper;
+import com.fastcam.programing.dmaker.dto.DeveloperDetailDto;
+import com.fastcam.programing.dmaker.dto.DeveloperDto;
 import com.fastcam.programing.dmaker.service.DMakerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.Collections;
@@ -22,13 +21,25 @@ public class DMakerController {
     private final DMakerService dMakerService;
 
     @GetMapping("/developers")
-    public List<String> getAllDevelopers() {
+    public List<DeveloperDto> getAllDevelopers() {
         //Get /developers_HTTP/1.1
         log.info("GET/developers HTTP/1.1");
 
-        return Arrays.asList("snow", "Elsa", "Olaf");
+        return dMakerService.getAllDevelopers();
 
     }
+
+    @GetMapping("/developer/{memberId}")
+    public DeveloperDetailDto getDeveloperDetail(
+            @PathVariable String memberId
+    ) {
+        //Get /developers_HTTP/1.1
+        log.info("GET/developers HTTP/1.1");
+
+        return dMakerService.getDeveloperDetail(memberId);
+
+    }
+
 
     @PostMapping("/create-developer")
     public CreateDeveloper.Response createDevelopers(
