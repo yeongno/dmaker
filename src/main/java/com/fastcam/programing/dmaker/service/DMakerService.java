@@ -3,6 +3,7 @@ package com.fastcam.programing.dmaker.service;
 import com.fastcam.programing.dmaker.dto.CreateDeveloper;
 import com.fastcam.programing.dmaker.dto.DeveloperDetailDto;
 import com.fastcam.programing.dmaker.dto.DeveloperDto;
+import com.fastcam.programing.dmaker.dto.EditDeveloper;
 import com.fastcam.programing.dmaker.entity.Developer;
 import com.fastcam.programing.dmaker.exception.DMakerErrorCode;
 import com.fastcam.programing.dmaker.exception.DMakerException;
@@ -46,19 +47,9 @@ public class DMakerService {
 
     private void validateCreateDeveloperRequest(CreateDeveloper.Request request) {
         //business validation
-        DeveloperLevel developerLevel = request.getDeveloperLevel();
-        Integer experienceYears = request.getExperienceYears();
-        if (developerLevel == DeveloperLevel.SENIOR
-                && experienceYears < 10) {
-            throw new DMakerException(LEVEL_EXPERIENCE_YEARS_NOT_MATCHED);
-        }
-        if (developerLevel == DeveloperLevel.JUNGNIOR
-                && (experienceYears < 4 || experienceYears > 10)) {
-            throw new DMakerException(LEVEL_EXPERIENCE_YEARS_NOT_MATCHED);
-        }
-        if (developerLevel == DeveloperLevel.JUNIOR && experienceYears > 4) {
-            throw new DMakerException(LEVEL_EXPERIENCE_YEARS_NOT_MATCHED);
-        }
+        validateDeveloperLevel(
+                request.getDeveloperLevel(),
+                request.getExperienceYears());
 
         developerRepository.findByMemberId(request.getMemberId())
                 .ifPresent((developer -> {
@@ -76,5 +67,44 @@ public class DMakerService {
         return developerRepository.findByMemberId(memberId)
                 .map(DeveloperDetailDto::fromEntity)
                 .orElseThrow(() -> new DMakerException(NO_DEVELOPER));
+    }
+
+    @Transactional
+    public DeveloperDetailDto editDeveloper(String memberId, EditDeveloper.Request request) {
+        validateEditDeveloperRequest(request, memberId);
+
+        Developer developer = developerRepository.findByMemberId(memberId).orElseThrow(
+                ()->new DMakerException(NO_DEVELOPER)
+        );
+
+        developer.setDeveloperLevel(request.getDeveloperLevel());
+        developer.setDeveloperSkillType(request.getDeveloperSkillType());
+        developer.setExperienceYears(request.getExperienceYears());
+
+        return DeveloperDetailDto.fromEntity(developer);
+    }
+
+    private void validateEditDeveloperRequest(
+            EditDeveloper.Request request,
+            String memberId
+    ) {
+        validateDeveloperLevel(
+                request.getDeveloperLevel(),
+                request.getExperienceYears()
+        );
+    }
+
+    private void validateDeveloperLevel(DeveloperLevel developerLevel, Integer experienceYears) {
+        if (developerLevel == DeveloperLevel.SENIOR
+                && experienceYears < 10) {
+            throw new DMakerException(LEVEL_EXPERIENCE_YEARS_NOT_MATCHED);
+        }
+        if (developerLevel == DeveloperLevel.JUNGNIOR
+                && (experienceYears < 4 || experienceYears > 10)) {
+            throw new DMakerException(LEVEL_EXPERIENCE_YEARS_NOT_MATCHED);
+        }
+        if (developerLevel == DeveloperLevel.JUNIOR && experienceYears > 4) {
+            throw new DMakerException(LEVEL_EXPERIENCE_YEARS_NOT_MATCHED);
+        }
     }
 }
