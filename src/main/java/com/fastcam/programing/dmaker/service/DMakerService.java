@@ -30,6 +30,7 @@ public class DMakerService {
     private final DeveloperRepository developerRepository;
     private final RetiredDeveloperRepository retiredDeveloperRepository;
 
+
     @Transactional
     public CreateDeveloper.Response createDeveloper(CreateDeveloper.Request request){
         validateCreateDeveloperRequest(request);
